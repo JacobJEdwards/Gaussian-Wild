@@ -38,7 +38,7 @@ try:
 except ImportError:
     TENSORBOARD_FOUND = False
 
-def training(dataset, opt, pipe, testing_iterations, saving_iterations, debug_from, postfix, args):
+def training(dataset, opt, pipe, testing_iterations, saving_iterations, debug_from, args):
     '''
     dataset:Groupparams  ModelParams
     opt:Groupparams  OptimizationParams
@@ -380,8 +380,7 @@ if __name__ == "__main__":
     parser.add_argument("--test_iterations", nargs="+", type=int, default=[i*5000 for i in range(1,20)])
     parser.add_argument("--save_iterations", nargs="+", type=int, default=[30_000])
     parser.add_argument("--quiet", action="store_true")
-    parser.add_argument("--postfix", action="store_true", type=str, default="")#for output path
-    
+
     parser.add_argument("--render_after_train",  action='store_true', default=True)
     parser.add_argument("--metrics_after_train",  action='store_true', default=True)
     parser.add_argument("--data_perturb", nargs="+", type=str, default=[])#for lego ["color","occ"]
@@ -400,7 +399,7 @@ if __name__ == "__main__":
     op.position_lr_max_steps=op.iterations
             
     training(lp.extract(args), op.extract(args), pp.extract(args), args.test_iterations, args.save_iterations,
-             args.debug_from, args.postfix, args)
+             args.debug_from, args)
     
     # All done
     print("\nTraining complete.")

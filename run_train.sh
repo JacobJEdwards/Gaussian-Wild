@@ -21,12 +21,6 @@ for POSTFIX in $POSTFIXES; do
 
       CUDA_VISIBLE_DEVICES=0 python ./train.py --source_path $SOURCE \
         --scene_name $SCENE --model_path $RESULT_DIR/"$POSTFIX"/"$SCENE"/ --eval --resolution 2 --iterations 10000 \
-
-      CUDA_VISIBLE_DEVICES=0 python simple_trainer.py --disable_viewer --data_factor $DATA_FACTOR \
-          --data_dir  \
-          --postfix "$POSTFIX" \
-          --save_images \
-          --tb_save_image \
-          --result_dir $RESULT_DIR/"$POSTFIX"/"$SCENE"/
+        --postfix "$POSTFIX"
   done
 done
