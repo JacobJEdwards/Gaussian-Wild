@@ -1,22 +1,32 @@
 ### If execute the following commands, uncomment them
+SCENE_DIR="/workspace/360_v2"
+SCENE_LIST="garden bicycle stump bonsai counter kitchen room" # treehill flowers
+POSTFIXES="variance multiexposure contrast"
 
-## sacre_coeur
-#CUDA_VISIBLE_DEVICES=2 python ./train.py --source_path /path to/Heritage-Recon/sacre_coeur/dense/ \
- #--scene_name sacre --model_path outputs/sacre/full --eval --resolution 2 --iterations 70000 \
+RESULT_DIR="/workspace/3d"
 
-## brandenburg_gate
-#CUDA_VISIBLE_DEVICES=2 python ./train.py --source_path /path to/Heritage-Recon/brandenburg_gate/dense/ \
-#--scene_name brandenburg --model_path outputs/brandenburg/full --eval --resolution 2 --iterations 70000 \
+for POSTFIX in $POSTFIXES; do
+  for SCENE in $SCENE_LIST;
+  do
 
-## trevi_fountain
-#CUDA_VISIBLE_DEVICES=2 python ./train.py --source_path /path to/Heritage-Recon/trevi_fountain/dense/ \
-#--scene_name trevi --model_path outputs/trevi/full --eval --resolution 2 --iterations 70000 \
+      if [ "$SCENE" = "bonsai" ] || [ "$SCENE" = "counter" ] || [ "$SCENE" = "kitchen" ] || [ "$SCENE" = "room" ]; then
+          DATA_FACTOR=2
+      else
+          DATA_FACTOR=4
+      fi
 
+      echo "Running $SCENE on $POSTFIX"
 
-###lego dataset
+      SOURCE=$SCENE_DIR/"$SCENE"/
 
-# ## perturbation with color and occlusion
-#CUDA_VISIBLE_DEVICES=2 python ./train.py --source_path /path to/NeRF_synthetic/lego/ --scene_name lego --model_path outputs/lego/pertur_color_occ\
-# --eval --resolution 1 --iterations 20000  --white_background --data_perturb color occ --use_decode_with_pos  --densify_grad_threshold 0.00015 --features_mask_iters 3000
+      CUDA_VISIBLE_DEVICES=0 python ./train.py --source_path $SOURCE \
+        --scene_name $SCENE --model_path $RESULT_DIR/"$POSTFIX"/"$SCENE"/ --eval --resolution 2 --iterations 10000 \
 
-
+      CUDA_VISIBLE_DEVICES=0 python simple_trainer.py --disable_viewer --data_factor $DATA_FACTOR \
+          --data_dir  \
+          --postfix "$POSTFIX" \
+          --save_images \
+          --tb_save_image \
+          --result_dir $RESULT_DIR/"$POSTFIX"/"$SCENE"/
+  done
+done
