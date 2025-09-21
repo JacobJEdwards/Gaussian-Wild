@@ -3,7 +3,7 @@
 # GRAPHDECO research group, https://team.inria.fr/graphdeco
 # All rights reserved.
 #
-# This software is free for non-commercial, research and evaluation use 
+# This software is free for non-commercial, research and evaluation use
 # under the terms of the LICENSE.md file.
 #
 # For inquiries contact  george.drettakis@inria.fr
@@ -46,7 +46,7 @@ class SceneInfo(NamedTuple):
 
 def getNerfppNorm(cam_info):
     def get_center_and_diag(cam_centers):
-        cam_centers = np.hstack(cam_centers)     
+        cam_centers = np.hstack(cam_centers)
         avg_cam_center = np.mean(cam_centers, axis=1, keepdims=True)
         center = avg_cam_center
         dist = np.linalg.norm(cam_centers - center, axis=0, keepdims=True)
@@ -69,7 +69,7 @@ def getNerfppNorm(cam_info):
 
 def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder):
     cam_infos = []
-  
+
     for idx, key in enumerate(cam_extrinsics):
         sys.stdout.write('\r')
         # the exact output you're looking for:
@@ -99,10 +99,10 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder):
 
         image_path = os.path.join(images_folder, os.path.basename(extr.name))
         image_name = os.path.basename(image_path).split(".")[0]
-        image = Image.open(image_path)        
+        image = Image.open(image_path)
 
         cam_info = CameraInfo(uid=uid, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
-                              image_path=image_path, image_name=image_name, width=width, height=height)     
+                              image_path=image_path, image_name=image_name, width=width, height=height)
         cam_infos.append(cam_info)
     sys.stdout.write('\n')
     return cam_infos
@@ -118,9 +118,9 @@ def fetchPly(path):
 def storePly(path, xyz, rgb):
     # Define the dtype for the structured array
     dtype = [('x', 'f4'), ('y', 'f4'), ('z', 'f4'),
-            ('nx', 'f4'), ('ny', 'f4'), ('nz', 'f4'),
-            ('red', 'u1'), ('green', 'u1'), ('blue', 'u1')]
-    
+             ('nx', 'f4'), ('ny', 'f4'), ('nz', 'f4'),
+             ('red', 'u1'), ('green', 'u1'), ('blue', 'u1')]
+
     normals = np.zeros_like(xyz)
 
     elements = np.empty(xyz.shape[0], dtype=dtype)
@@ -132,49 +132,87 @@ def storePly(path, xyz, rgb):
     ply_data = PlyData([vertex_element])
     ply_data.write(path)
 
-def readColmapSceneInfo(path, images, eval, llffhold=8):
+def readColmapSceneInfo(path, images, eval, llffhold=8, postfix=""):
+    if llffhold > 0:
+        return readColmapSceneInfo_llff(path, images, eval, llffhold, postfix)
+    else:
+        try:
+            cameras_extrinsic_file = os.path.join(path, "sparse", "images.bin")
+            cameras_intrinsic_file = os.path.join(path, "sparse", "cameras.bin")
+            cam_extrinsics = read_extrinsics_binary(cameras_extrinsic_file)
+            cam_intrinsics = read_intrinsics_binary(cameras_intrinsic_file)
+        except:
+            cameras_extrinsic_file = os.path.join(path, "sparse", "images.txt")
+            cameras_intrinsic_file = os.path.join(path, "sparse", "cameras.txt")
+            cam_extrinsics = read_extrinsics_text(cameras_extrinsic_file)
+            cam_intrinsics = read_intrinsics_text(cameras_intrinsic_file)
+
+        images_folder = "images" if images is None else images
+        if eval:
+            reading_dir_train = f"{images_folder}{postfix}"
+            reading_dir_test = images_folder
+        else:
+            reading_dir_train = images_folder
+            reading_dir_test = images_folder
+
+
+        cam_infos_unsorted_train = readColmapCameras(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics, images_folder=os.path.join(path, reading_dir_train))
+        cam_infos_train = sorted(cam_infos_unsorted_train.copy(), key = lambda x : x.image_name)
+
+        if eval:
+            cam_infos_unsorted_test = readColmapCameras(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics, images_folder=os.path.join(path, reading_dir_test))
+            cam_infos_test = sorted(cam_infos_unsorted_test.copy(), key = lambda x : x.image_name)
+
+            train_cam_infos = [c for i, c in enumerate(cam_infos_train) if i % 8 != 0]
+            test_cam_infos = [c for i, c in enumerate(cam_infos_test) if i % 8 == 0]
+        else:
+            train_cam_infos = cam_infos_train
+            test_cam_infos = []
+
+
+        nerf_normalization = getNerfppNorm(train_cam_infos)
+
+        ply_path = os.path.join(path, "sparse/points3D.ply")
+        bin_path = os.path.join(path, "sparse/points3D.bin")
+        txt_path = os.path.join(path, "sparse/points3D.txt")
+        if not os.path.exists(ply_path):
+            print("Converting point3d.bin to .ply, will happen only the first time you open the scene.")
+            try:
+                xyz, rgb, _ = read_points3D_binary(bin_path)
+            except:
+                xyz, rgb, _ = read_points3D_text(txt_path)
+            storePly(ply_path, xyz, rgb)
+        try:
+            pcd = fetchPly(ply_path)
+        except:
+            pcd = None
+
+        scene_info = SceneInfo(point_cloud=pcd,
+                               train_cameras=train_cam_infos,
+                               test_cameras=test_cam_infos,
+                               nerf_normalization=nerf_normalization,
+                               ply_path=ply_path)
+        return scene_info
+
+def readColmapSceneInfo_llff(path, images, eval, llffhold, postfix=""):
     try:
         cameras_extrinsic_file = os.path.join(path, "sparse", "images.bin")
-        cameras_intrinsic_file = os.path.join(path, "sparse", "cameras.bin")   
-        cam_extrinsics = read_extrinsics_binary(cameras_extrinsic_file)     
-        cam_intrinsics = read_intrinsics_binary(cameras_intrinsic_file)    
+        cameras_intrinsic_file = os.path.join(path, "sparse", "cameras.bin")
+        cam_extrinsics = read_extrinsics_binary(cameras_extrinsic_file)
+        cam_intrinsics = read_intrinsics_binary(cameras_intrinsic_file)
     except:
         cameras_extrinsic_file = os.path.join(path, "sparse", "images.txt")
         cameras_intrinsic_file = os.path.join(path, "sparse", "cameras.txt")
         cam_extrinsics = read_extrinsics_text(cameras_extrinsic_file)
         cam_intrinsics = read_intrinsics_text(cameras_intrinsic_file)
 
-    reading_dir = "images" if images == None else images
-
+    reading_dir = "images" if images is None else images
     cam_infos_unsorted = readColmapCameras(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics, images_folder=os.path.join(path, reading_dir))
     cam_infos = sorted(cam_infos_unsorted.copy(), key = lambda x : x.image_name)
 
     if eval:
-        root_dir=os.path.dirname(path)
-        tsv = glob.glob(os.path.join(root_dir, '*.tsv'))[0]
-        scene_name = os.path.basename(tsv)[:-4]  
-        files = pd.read_csv(tsv, sep='\t')                          
-        files = files[~files['id'].isnull()]   
-        files.reset_index(inplace=True, drop=True)
-
-        img_path_to_id = {}
-        for v in cam_extrinsics.values():
-            img_path_to_id[v.name] = v.id
-        img_ids = []
-        image_paths = {} # {id: filename}
-        for filename in list(files['filename']):
-            if filename in img_path_to_id:
-                id_ = img_path_to_id[filename]
-                image_paths[id_] = filename              
-                img_ids += [id_]               
-
-        img_ids_train = [id_ for i, id_ in enumerate(img_ids) 
-                                    if files.loc[i, 'split']=='train']
-        img_ids_test = [id_ for i, id_ in enumerate(img_ids)
-                                    if files.loc[i, 'split']=='test']
-        
-        train_cam_infos =[ c for c in cam_infos if c.uid in img_ids_train]
-        test_cam_infos =[ c for c in cam_infos if c.uid in img_ids_test]
+        train_cam_infos = [c for i, c in enumerate(cam_infos) if i % llffhold != 0]
+        test_cam_infos = [c for i, c in enumerate(cam_infos) if i % llffhold == 0]
     else:
         train_cam_infos = cam_infos
         test_cam_infos = []
@@ -203,6 +241,7 @@ def readColmapSceneInfo(path, images, eval, llffhold=8):
                            ply_path=ply_path)
     return scene_info
 
+
 def readCamerasFromTransforms(path, transformsfile, white_background, extension=".png",data_perturb=None,split="train"):
     cam_infos = []
 
@@ -210,12 +249,12 @@ def readCamerasFromTransforms(path, transformsfile, white_background, extension=
         contents = json.load(json_file)
         fovx = contents["camera_angle_x"]
 
-        frames = contents["frames"]      
+        frames = contents["frames"]
         for idx, frame in enumerate(frames):
-            cam_name = os.path.join(path, frame["file_path"] + extension)     
+            cam_name = os.path.join(path, frame["file_path"] + extension)
 
             # NeRF 'transform_matrix' is a camera-to-world transform
-            c2w = np.array(frame["transform_matrix"])         
+            c2w = np.array(frame["transform_matrix"])
             # change from OpenGL/Blender camera axes (Y up, Z back) to COLMAP (Y down, Z forward)
             c2w[:3, 1:3] *= -1
 
@@ -229,49 +268,49 @@ def readCamerasFromTransforms(path, transformsfile, white_background, extension=
             image = Image.open(image_path)
             if idx != 0 and split=="train":
                 image=add_perturbation(image,data_perturb,idx)
-                   
-            im_data = np.array(image.convert("RGBA"))  
+
+            im_data = np.array(image.convert("RGBA"))
             bg = np.array([1,1,1]) if white_background else np.array([0, 0, 0])
 
             norm_data = im_data / 255.0
-            arr = norm_data[:,:,:3] * norm_data[:, :, 3:4] + bg * (1 - norm_data[:, :, 3:4])      
+            arr = norm_data[:,:,:3] * norm_data[:, :, 3:4] + bg * (1 - norm_data[:, :, 3:4])
             image = Image.fromarray(np.array(arr*255.0, dtype=np.byte), "RGB")
 
             fovy = focal2fov(fov2focal(fovx, image.size[0]), image.size[1])
-            FovY = fovy 
+            FovY = fovy
             FovX = fovx
 
             cam_infos.append(CameraInfo(uid=idx, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
-                            image_path=image_path, image_name=image_name, width=image.size[0], height=image.size[1]))
-            
+                                        image_path=image_path, image_name=image_name, width=image.size[0], height=image.size[1]))
+
     return cam_infos
 
 def readNerfSyntheticInfo(path, white_background, eval, extension=".png",data_perturb=None):
     print("Reading Training Transforms")
-    train_cam_infos = readCamerasFromTransforms(path, "transforms_train.json", white_background, extension,data_perturb=data_perturb,split="train")  #[CameraInfo(id，fov，R，T，图片路径，图片，高，宽)...100长度]
+    train_cam_infos = readCamerasFromTransforms(path, "transforms_train.json", white_background, extension,data_perturb=data_perturb,split="train")
     print("Reading Test Transforms")
     test_cam_infos = readCamerasFromTransforms(path, "transforms_test.json", white_background, extension,data_perturb=None,split="test")
-    
+
     if not eval:
         train_cam_infos.extend(test_cam_infos)
         test_cam_infos = []
 
-    nerf_normalization = getNerfppNorm(train_cam_infos)          
+    nerf_normalization = getNerfppNorm(train_cam_infos)
 
     ply_path = os.path.join(path, "points3d.ply")
     if not os.path.exists(ply_path):
         # Since this data set has no colmap data, we start with random points
         num_pts = 100_000
         print(f"Generating random point cloud ({num_pts})...")
-        
+
         # We create random points inside the bounds of the synthetic Blender scenes
-        xyz = np.random.random((num_pts, 3)) * 2.6 - 1.3         
-        shs = np.random.random((num_pts, 3)) / 255.0              
+        xyz = np.random.random((num_pts, 3)) * 2.6 - 1.3
+        shs = np.random.random((num_pts, 3)) / 255.0
         pcd = BasicPointCloud(points=xyz, colors=SH2RGB(shs), normals=np.zeros((num_pts, 3)))
 
-        storePly(ply_path, xyz, SH2RGB(shs) * 255)            
+        storePly(ply_path, xyz, SH2RGB(shs) * 255)
     try:
-        pcd = fetchPly(ply_path)                
+        pcd = fetchPly(ply_path)
     except:
         pcd = None
 
@@ -296,7 +335,7 @@ def add_perturbation(img, perturbation, seed):
             np.random.seed(10*seed+i)
             random_color = tuple(np.random.choice(range(256), 3))
             draw.rectangle(((left+20*i, top), (left+20*(i+1), top+200)),
-                            fill=random_color)
+                           fill=random_color)
 
     if 'color' in perturbation:
         np.random.seed(seed)

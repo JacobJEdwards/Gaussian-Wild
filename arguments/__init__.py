@@ -50,7 +50,9 @@ class ModelParams(ParamGroup):
         self.sh_degree = 3
         self._source_path = ""
         self._model_path = ""
-        self._images = "images"
+        self._images = "images_8"
+        self.postfix = ""
+        self.llffhold = 8
         self._resolution = 1#-1
         self._white_background = False
         self.data_device = "cuda"
