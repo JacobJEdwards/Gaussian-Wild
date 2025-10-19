@@ -149,7 +149,6 @@ def readColmapSceneInfo(path, images, eval, llffhold=8, postfix=""):
             reading_dir_train = images_folder
             reading_dir_test = images_folder
 
-
         cam_infos_unsorted_train = readColmapCameras(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics, images_folder=os.path.join(path, reading_dir_train))
         cam_infos_train = sorted(cam_infos_unsorted_train.copy(), key = lambda x : x.image_name)
 
@@ -166,9 +165,9 @@ def readColmapSceneInfo(path, images, eval, llffhold=8, postfix=""):
 
         nerf_normalization = getNerfppNorm(train_cam_infos)
 
-        ply_path = os.path.join(path, "sparse/points3D.ply")
-        bin_path = os.path.join(path, "sparse/points3D.bin")
-        txt_path = os.path.join(path, "sparse/points3D.txt")
+        ply_path = os.path.join(path, "sparse/0/points3D.ply")
+        bin_path = os.path.join(path, "sparse/0/points3D.bin")
+        txt_path = os.path.join(path, "sparse/0/points3D.txt")
         if not os.path.exists(ply_path):
             print("Converting point3d.bin to .ply, will happen only the first time you open the scene.")
             try:
@@ -200,22 +199,32 @@ def readColmapSceneInfo_llff(path, images, eval, llffhold, postfix=""):
         cam_extrinsics = read_extrinsics_text(cameras_extrinsic_file)
         cam_intrinsics = read_intrinsics_text(cameras_intrinsic_file)
 
-    reading_dir = "images" if images is None else images
-    cam_infos_unsorted = readColmapCameras(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics, images_folder=os.path.join(path, reading_dir))
-    cam_infos = sorted(cam_infos_unsorted.copy(), key = lambda x : x.image_name)
-
+    images_folder = "images" if images is None else images
     if eval:
-        train_cam_infos = [c for i, c in enumerate(cam_infos) if i % llffhold != 0]
-        test_cam_infos = [c for i, c in enumerate(cam_infos) if i % llffhold == 0]
+        reading_dir_train = f"{images_folder}{postfix}"
+        reading_dir_test = images_folder
+    else:
+        reading_dir_train = images_folder
+        reading_dir_test = images_folder
+
+    cam_infos_unsorted = readColmapCameras(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics,
+                                           images_folder=os.path.join(path, reading_dir_train))
+    cam_infos = sorted(cam_infos_unsorted.copy(), key = lambda x : x.image_name)
+    if eval:
+        cam_infos_unsorted_test = readColmapCameras(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics, images_folder=os.path.join(path, reading_dir_test))
+        cam_infos_test = sorted(cam_infos_unsorted_test.copy(), key = lambda x : x.image_name)
+
+        train_cam_infos = [c for i, c in enumerate(cam_infos_train) if i % 8 != 0]
+        test_cam_infos = [c for i, c in enumerate(cam_infos_test) if i % 8 == 0]
     else:
         train_cam_infos = cam_infos
         test_cam_infos = []
 
     nerf_normalization = getNerfppNorm(train_cam_infos)
 
-    ply_path = os.path.join(path, "sparse/points3D.ply")
-    bin_path = os.path.join(path, "sparse/points3D.bin")
-    txt_path = os.path.join(path, "sparse/points3D.txt")
+    ply_path = os.path.join(path, "sparse/0/points3D.ply")
+    bin_path = os.path.join(path, "sparse/0/points3D.bin")
+    txt_path = os.path.join(path, "sparse/0/points3D.txt")
     if not os.path.exists(ply_path):
         print("Converting point3d.bin to .ply, will happen only the first time you open the scene.")
         try:
