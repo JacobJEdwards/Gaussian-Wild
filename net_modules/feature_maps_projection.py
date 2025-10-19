@@ -29,6 +29,13 @@ def project2d(pointcloud,world2camera,camera2image,box_coord,feature_map):
     valid_pixel_normal=torch.unsqueeze(valid_pixel_normal,0)
     valid_pixel_normal=torch.unsqueeze(valid_pixel_normal,0)
     point_feature=F.grid_sample(feature_map,valid_pixel_normal,mode='bilinear', padding_mode='border').squeeze().T
+
+    if point_feature.dim() < 2:
+        feature_channels = feature_map.shape[1]
+        point_feature_all = torch.zeros(size=(pointcloud.shape[0], feature_channels), dtype=pointcloud.dtype, device=pointcloud.device)
+        project_mask = torch.zeros(pointcloud.shape[0], dtype=torch.bool, device=pointcloud.device)
+        return point_feature_all, project_mask
+
     point_feature_all=torch.zeros(size=(pointcloud.shape[0],point_feature.shape[1]),dtype=pointcloud.dtype,device=pointcloud.device)
     
     point_feature_all[valid_point_mask]=point_feature
