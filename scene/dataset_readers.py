@@ -136,16 +136,10 @@ def readColmapSceneInfo(path, images, eval, llffhold=8, postfix=""):
     if llffhold > 0:
         return readColmapSceneInfo_llff(path, images, eval, llffhold, postfix)
     else:
-        try:
-            cameras_extrinsic_file = os.path.join(path, "sparse", "0", "images.bin")
-            cameras_intrinsic_file = os.path.join(path, "sparse", "0", "cameras.bin")
-            cam_extrinsics = read_extrinsics_binary(cameras_extrinsic_file)
-            cam_intrinsics = read_intrinsics_binary(cameras_intrinsic_file)
-        except:
-            cameras_extrinsic_file = os.path.join(path, "sparse", "images.txt")
-            cameras_intrinsic_file = os.path.join(path, "sparse", "cameras.txt")
-            cam_extrinsics = read_extrinsics_text(cameras_extrinsic_file)
-            cam_intrinsics = read_intrinsics_text(cameras_intrinsic_file)
+        cameras_extrinsic_file = os.path.join(path, "sparse", "0", "images.bin")
+        cameras_intrinsic_file = os.path.join(path, "sparse", "0", "cameras.bin")
+        cam_extrinsics = read_extrinsics_binary(cameras_extrinsic_file)
+        cam_intrinsics = read_intrinsics_binary(cameras_intrinsic_file)
 
         images_folder = "images" if images is None else images
         if eval:
