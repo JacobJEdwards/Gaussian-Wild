@@ -137,8 +137,8 @@ def readColmapSceneInfo(path, images, eval, llffhold=8, postfix=""):
         return readColmapSceneInfo_llff(path, images, eval, llffhold, postfix)
     else:
         try:
-            cameras_extrinsic_file = os.path.join(path, "sparse", "images.bin")
-            cameras_intrinsic_file = os.path.join(path, "sparse", "cameras.bin")
+            cameras_extrinsic_file = os.path.join(path, "sparse", "0", "images.bin")
+            cameras_intrinsic_file = os.path.join(path, "sparse", "0", "cameras.bin")
             cam_extrinsics = read_extrinsics_binary(cameras_extrinsic_file)
             cam_intrinsics = read_intrinsics_binary(cameras_intrinsic_file)
         except:
