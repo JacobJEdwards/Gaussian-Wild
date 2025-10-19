@@ -68,7 +68,8 @@ def getNerfppNorm(cam_info):
     return {"translate": translate, "radius": radius}
 
 def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder):
-    print(cam_extrinsics)
+    print("Camera Intrinsics Keys: ", cam_intrinsics.keys())
+    print("Camera Extrinsics IDs: ", [cam_extrinsics[key].id for key in cam_extrinsics])
     cam_infos = []
 
     for idx, key in enumerate(cam_extrinsics):
