@@ -79,7 +79,12 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder):
         sys.stdout.flush()
 
         extr = cam_extrinsics[key]
-        intr = cam_intrinsics[extr.id]
+        try:
+            intr = cam_intrinsics[extr.id]
+        except:
+            intr = cam_intrinsics[list(cam_intrinsics.keys())[0]]
+            print(f"Warning: Camera intrinsics for camera id {extr.id} not found, using camera id {intr.id} instead.")
+
         height = intr.height
         width = intr.width
 
