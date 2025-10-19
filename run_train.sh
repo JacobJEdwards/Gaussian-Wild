@@ -1,9 +1,9 @@
 ### If execute the following commands, uncomment them
 SCENE_DIR="/workspace/360_v2"
 SCENE_LIST="garden bicycle stump bonsai counter kitchen room" # treehill flowers
-POSTFIXES="variance multiexposure contrast"
+POSTFIXES="_variance _multiexposure _contrast"
 
-RESULT_DIR="/workspace/3d"
+RESULT_DIR="/workspace/wild"
 
 for POSTFIX in $POSTFIXES; do
   for SCENE in $SCENE_LIST;
