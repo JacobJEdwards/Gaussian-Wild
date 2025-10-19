@@ -16,6 +16,7 @@ from random import randint
 from utils.loss_utils import l1_loss, ssim
 from gaussian_renderer import render, network_gui
 import sys
+import json
 from scene import Scene, GaussianModel
 from utils.general_utils import safe_state
 import uuid
@@ -225,15 +226,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, debug_fr
                 gaussians.optimizer.zero_grad(set_to_none = True)
 
     #drawing training loss curve
-    fig = plt.figure()
-    logging.info("Drawing Training loss curve")
-    print("\nDrawing Training loss curve")
-    plt.plot(record_loss)
-    plt.xlabel('Epochs')
-    plt.ylabel('Training loss')
-    plt.title('Training error curve')
     os.makedirs(os.path.join(scene.model_path,"train", "ours_{}".format(iteration)),exist_ok=True)
-    fig.savefig(os.path.join(scene.model_path,"train", "ours_{}".format(iteration),"training_loss.png"))
     #render result and evaluate metrics
     with torch.no_grad():
         if args.render_after_train:
