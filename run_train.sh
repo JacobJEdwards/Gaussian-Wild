@@ -20,7 +20,7 @@ for POSTFIX in $POSTFIXES; do
       SOURCE=$SCENE_DIR/"$SCENE"/
 
       CUDA_VISIBLE_DEVICES=0 python ./train.py --source_path $SOURCE \
-        --scene_name $SCENE --model_path $RESULT_DIR/"$POSTFIX"/"$SCENE"/ --eval --resolution 2 --iterations 10000 \
+        --scene_name $SCENE --model_path $RESULT_DIR/"$POSTFIX"/"$SCENE"/ --eval --iterations 10000 \
         --postfix "$POSTFIX"
   done
 done
