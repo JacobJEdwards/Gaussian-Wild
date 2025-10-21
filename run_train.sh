@@ -5,22 +5,20 @@ POSTFIXES="_variance _multiexposure _contrast"
 
 RESULT_DIR="/workspace/wild"
 
-for POSTFIX in $POSTFIXES; do
-  for SCENE in $SCENE_LIST;
-  do
+#for POSTFIX in $POSTFIXES; do
+for SCENE in $SCENE_LIST;
+do
 
-      if [ "$SCENE" = "bonsai" ] || [ "$SCENE" = "counter" ] || [ "$SCENE" = "kitchen" ] || [ "$SCENE" = "room" ]; then
-          DATA_FACTOR=2
-      else
-          DATA_FACTOR=4
-      fi
+    if [ "$SCENE" = "bonsai" ] || [ "$SCENE" = "counter" ] || [ "$SCENE" = "kitchen" ] || [ "$SCENE" = "room" ]; then
+        DATA_FACTOR=2
+    else
+        DATA_FACTOR=4
+    fi
 
-      echo "Running $SCENE on $POSTFIX"
+    echo "Running $SCENE on $POSTFIX"
 
-      SOURCE=$SCENE_DIR/"$SCENE"/
+    SOURCE=$SCENE_DIR/"$SCENE"/
 
-      CUDA_VISIBLE_DEVICES=0 python ./train.py --source_path $SOURCE \
-        --scene_name $SCENE --model_path $RESULT_DIR/"$POSTFIX"/"$SCENE"/ --eval --iterations 10000 \
-        --postfix "$POSTFIX"
-  done
+    CUDA_VISIBLE_DEVICES=0 python ./train.py --source_path $SOURCE \
+      --scene_name $SCENE --model_path $RESULT_DIR/"$SCENE"/ --eval --iterations 10000
 done
