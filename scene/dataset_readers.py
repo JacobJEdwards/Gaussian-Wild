@@ -153,31 +153,8 @@ def readColmapSceneInfo(path, images, eval, llffhold=8):
     cam_infos = sorted(cam_infos_unsorted.copy(), key = lambda x : x.image_name)
 
     if eval:
-        root_dir=os.path.dirname(path)
-        tsv = glob.glob(os.path.join(root_dir, '*.tsv'))[0]
-        scene_name = os.path.basename(tsv)[:-4]
-        files = pd.read_csv(tsv, sep='\t')
-        files = files[~files['id'].isnull()]
-        files.reset_index(inplace=True, drop=True)
-
-        img_path_to_id = {}
-        for v in cam_extrinsics.values():
-            img_path_to_id[v.name] = v.id
-        img_ids = []
-        image_paths = {} # {id: filename}
-        for filename in list(files['filename']):
-            if filename in img_path_to_id:
-                id_ = img_path_to_id[filename]
-                image_paths[id_] = filename
-                img_ids += [id_]
-
-        img_ids_train = [id_ for i, id_ in enumerate(img_ids)
-                         if files.loc[i, 'split']=='train']
-        img_ids_test = [id_ for i, id_ in enumerate(img_ids)
-                        if files.loc[i, 'split']=='test']
-
-        train_cam_infos =[ c for c in cam_infos if c.uid in img_ids_train]
-        test_cam_infos =[ c for c in cam_infos if c.uid in img_ids_test]
+        train_cam_infos = [c for i, c in enumerate(cam_infos) if i % 8 != 0]
+        test_cam_infos = [c for i, c in enumerate(cam_infos) if i % 8 == 0]
     else:
         train_cam_infos = cam_infos
         test_cam_infos = []
