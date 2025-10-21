@@ -160,10 +160,7 @@ def readColmapSceneInfo(path, images, eval, llffhold=8):
     txt_path = os.path.join(path, "sparse/points3D.txt")
     if not os.path.exists(ply_path):
         print("Converting point3d.bin to .ply, will happen only the first time you open the scene.")
-        try:
-            xyz, rgb, _ = read_points3D_binary(bin_path)
-        except:
-            xyz, rgb, _ = read_points3D_text(txt_path)
+        xyz, rgb, _ = read_points3D_binary(bin_path)
         storePly(ply_path, xyz, rgb)
     try:
         pcd = fetchPly(ply_path)
