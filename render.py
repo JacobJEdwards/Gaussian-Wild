@@ -199,9 +199,8 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
             torchvision.utils.save_image(tmask, os.path.join(mask_path, '{0:05d}'.format(idx) + ".png"))
 
         image_name = os.path.basename(view.image_name)
-        print(image_name)
         torchvision.utils.save_image(rendering, os.path.join(render_path, f"{image_name}.png"))
-        torchvision.utils.save_image(gt, os.path.join(gts_path, '{0:05d}'.format(idx) + ".png"))
+        torchvision.utils.save_image(gt, os.path.join(gts_path, f"{image_name}.png"))
     
     if render_multi_view:
         #origin_views=copy.deepcopy(views)
