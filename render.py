@@ -197,8 +197,9 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
         if gaussians.use_features_mask:
             tmask=gaussians.features_mask.repeat(1,3,1,1)
             torchvision.utils.save_image(tmask, os.path.join(mask_path, '{0:05d}'.format(idx) + ".png"))
-        
-        torchvision.utils.save_image(rendering, os.path.join(render_path, '{0:05d}'.format(idx) + ".png"))
+
+        image_name = os.path.basename(view.image_name)
+        torchvision.utils.save_image(rendering, os.path.join(render_path, image_name))
         torchvision.utils.save_image(gt, os.path.join(gts_path, '{0:05d}'.format(idx) + ".png"))
     
     if render_multi_view:
