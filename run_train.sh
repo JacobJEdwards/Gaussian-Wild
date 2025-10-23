@@ -20,5 +20,5 @@ do
     SOURCE=$SCENE_DIR/"$SCENE"/
 
     CUDA_VISIBLE_DEVICES=0 python ./train.py --source_path $SOURCE \
-      --scene_name $SCENE --model_path $RESULT_DIR/"$SCENE"/multiexposure --eval --iterations 10000
+      --scene_name $SCENE --model_path $RESULT_DIR/"$SCENE"/contrast --eval --iterations 10000
 done

@@ -50,7 +50,7 @@ class ModelParams(ParamGroup):
         self.sh_degree = 3
         self._source_path = ""
         self._model_path = ""
-        self._images = "images_8_multiexposure"
+        self._images = "images_8_contrast"
         self.postfix = ""
         self.llffhold = 8
         self._resolution = 1#-1
